@@ -16,7 +16,7 @@ void Board::reset()
 	endGame = false;
 }
 
-ResultGame Board::checkFinishGame()
+ResultGame Board::checkFinishGame(size_t numberFig)
 {
 	int whiteNumber = 0, blackNumber = 0;
 
@@ -32,9 +32,9 @@ ResultGame Board::checkFinishGame()
 			if (field[i][j] == FigureColor::BLACK)
 				blackNumber++;
 
-	return (whiteNumber == 9) ? (ResultGame::WHITE_WIN) :
-		((blackNumber == 9) ? (ResultGame::BLACK_WIN) :
-			(((blackNumber == 9) && (whiteNumber == 9)) ? (ResultGame::EQUAL_WIN) : (ResultGame::NO_WIN)));
+	return (whiteNumber == numberFig) ? (ResultGame::WHITE_WIN) :
+		((blackNumber == numberFig) ? (ResultGame::BLACK_WIN) :
+			(((blackNumber == numberFig) && (whiteNumber == numberFig)) ? (ResultGame::EQUAL_WIN) : (ResultGame::NO_WIN)));
 }
 
 FigureColor Board::getColor(int x, int y)
@@ -59,12 +59,12 @@ bool Board::isAvailableToMove(int row, int col, int curCellRow, int curCellCol, 
 	return true;
 }
 
-bool Board::moveFigure(int row, int col, int curCellRow, int curCellCol, FigureColor s)
+bool Board::moveFigure(int nextRow, int nextCol, int curRow, int curCol, FigureColor c)
 {
-	if (isAvailableToMove(row, col, curCellRow, curCellCol, s))
+	if (isAvailableToMove(nextRow, nextCol, curRow, curCol, c))
 	{
-		field[row][col] = s;
-		field[curCellRow][curCellCol] = FigureColor::NONE_COLOR;
+		field[curRow][curCol] = FigureColor::NONE_COLOR;
+		field[nextRow][nextCol] = c;
 		return true;
 	}
 

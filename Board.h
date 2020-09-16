@@ -19,12 +19,12 @@ public:
 	FigureColor getColor(int x, int y);
 	void setCurrentColor(FigureColor c) { curColor = c; }
 
-	bool moveFigure(int row, int col, int curCellRow, int curCellCol, FigureColor c);
+	bool moveFigure(int nextRow, int nextCol, int curRow, int curCol, FigureColor c);
 	bool isAvailableToMove(int row, int col, int curCellRow, int curCellCol, FigureColor c);
 	bool isSelectCell(size_t row, size_t col, size_t curCellRow, size_t curCellCol, FigureColor c);
 	bool isEmptyCell(GridLocation gl);
 	bool isBlackCellClosed(GridLocation gl);
-	ResultGame checkFinishGame();
+	ResultGame checkFinishGame(size_t numberFig);
 
 	char field[BOARD_LEN][BOARD_LEN];
 	bool endGame;

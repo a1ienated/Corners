@@ -1,6 +1,6 @@
 #include "Player.h"
 
-Player::Player(Board* cb, FigureColor _color) : board(cb), color(_color), countStep(0),
+Player::Player(Board* cb, FigureColor _color) : board(cb), color(_color), countStep(0), numberFig(0),
 		currentPos{ 0, 0 } {}
 
 Human::Human(Board* board, FigureColor _color) : Player(board, _color), isSelect(false)
@@ -44,9 +44,12 @@ void Human::reset()
 
 void Human::fillFigures()
 {
-	for (int i = 7; i > 4; i--)
-		for (int j = 7; j > 4; j--)
+	for (int i = 7; i > whiteNum; i--)
+		for (int j = 7; j > whiteNum; j--)
+		{
 			board->field[i][j] = color;
+			++numberFig;
+		}
 }
 
 // AI player-------------------------------------------------------------------
@@ -87,6 +90,8 @@ PlayResult AI::step()
 	Graph graph(8, 8);
 	findBarrier(graph, currentPos);
 	GridLocation nextStep;
+	std::pair<bool, GridLocation> gl;
+	gl.first = false;
 
 	// Target selection
 	for (auto it = goals.begin(); it != goals.end(); it++)
@@ -112,29 +117,34 @@ PlayResult AI::step()
 	}
 
 	// Figure selection
-	nextStep = searchGoal(graph, figures.at(currentFigure), goals.at(currentGoal));
-	do
+	nextStep = searchGoal(graph, figures.at(currentFigure), goals.at(currentGoal)).second;
+	if ((nextStep == figures.at(currentFigure)) || ((countStep % 3) == 0))
 	{
-		if ((nextStep == figures.at(currentFigure)) || (countStep % 8 == 0))
+		for (auto it = figures.begin(); it != figures.end(); it++)
 		{
-			++currentFigure;
-			if ((currentFigure > figures.size() - 1))
+			gl = searchGoal(graph, (*it), goals.at(currentGoal));
+			if (gl.first)
 			{
-				currentFigure = 0;
-				nextStep = searchGoal(graph, figures.at(currentFigure), goals.at(currentGoal));
+				currentFigure = std::distance(figures.begin(), it);
+				nextStep = gl.second;
 				break;
 			}
 		}
-		nextStep = searchGoal(graph, figures.at(currentFigure), goals.at(currentGoal));
-		break;
+	}
+	else
+	{
+		++currentFigure;
+		if ((currentFigure > figures.size() - 1))
+		{
+			currentFigure = 0;
+		}
+		nextStep = searchGoal(graph, figures.at(currentFigure), goals.at(currentGoal)).second;
+	}
 
-	} while (true);
+	if(board->moveFigure(nextStep.row, nextStep.col, figures.at(currentFigure).row, figures.at(currentFigure).col, color))
+		figures[currentFigure] = nextStep;
 
-	board->field[figures.at(currentFigure).row][figures.at(currentFigure).col] = FigureColor::NONE_COLOR;
-	board->field[nextStep.row][nextStep.col] = color;
-	figures[currentFigure] = nextStep;
 	++countStep;
-
 	return PlayResult::SUCCESS;
 }
 
@@ -155,33 +165,38 @@ void AI::findBarrier(Graph& graph, GridLocation& current)
 			}
 }
 
-void AI::fillGoals()
-{
-	if (!goals.empty())
-		goals.clear();
-
-	for (int i = 7; i > 4; i--)
-		for (int j = 7; j > 4; j--)
-		{
-			goals.push_back(GridLocation{ i, j });
-		}
-}
-
 void AI::fillFigures()
 {
 	if (!figures.empty())
 		figures.clear();
 
-	for (int i = 2; i >= 0; i--)
-		for (int j = 2; j >= 0; j--)
+	for (int i = blackNum; i >= 0; i--)
+		for (int j = blackNum; j >= 0; j--)
 		{
 			board->field[i][j] = color;
 			figures.push_back(GridLocation{ i, j });
 		}
+
+	numberFig = figures.size();
 }
 
-GridLocation AI::searchGoal(const Graph& graph, GridLocation start, GridLocation goal)
+void AI::fillGoals()
 {
+	if (!goals.empty())
+		goals.clear();
+
+	for (int i = 7; i > whiteNum; i--)
+		for (int j = 7; j > whiteNum; j--)
+		{
+			goals.push_back(GridLocation{ i, j });
+		}
+}
+
+std::pair<bool, GridLocation> AI::searchGoal(const Graph& graph, GridLocation start, GridLocation goal)
+{
+	std::pair<bool, GridLocation> gl;
+	gl.first = false; gl.second = start;
+
 	std::queue<GridLocation> frontier;
 	frontier.push(start);
 	std::unordered_map<GridLocation, GridLocation> cameFrom;
@@ -205,25 +220,31 @@ GridLocation AI::searchGoal(const Graph& graph, GridLocation start, GridLocation
 
 	// Find back path
 	if (cameFrom.empty())
-		return start;
+	{
+		return gl;
+	}
 
 	auto it = cameFrom.find(goal);
 	std::pair<GridLocation, GridLocation> p;
-	if (it == cameFrom.end())
+	if (it != cameFrom.end())
 	{
-		auto max = get_max(cameFrom);
-		//auto max = std::max_element(cameFrom.begin(), cameFrom.end());
-		p = max;
+		p = *it;
+		gl.first = true;
 	}
 	else
-		p = *it;
+	{
+		auto max = get_max(cameFrom);
+		p = max;
+	}
 
 	while (p.second != start) {
 		auto it = cameFrom.find(p.second);
 		p = *it;
 	}
 
-	return p.first;
+	gl.second = p.first;
+
+	return gl;
 }
 
 Graph::Graph(int _width, int _height) : width(_width), height(_height)

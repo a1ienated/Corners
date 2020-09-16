@@ -129,8 +129,8 @@ bool FrameFunc()
 	res = player->step();
 	if (res == PlayResult::SUCCESS)
 	{
-		if (player->getCountStep() > 92)
-			s = board->checkFinishGame();
+		if (player->getCountStep() > 91)
+			s = board->checkFinishGame(player->getNumberFig());
 
 		if (s != ResultGame::NO_WIN && !board->endGame)
 		{
