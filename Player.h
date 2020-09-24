@@ -48,13 +48,12 @@ public:
 	void fillGoals();
 
 	size_t findMinDistance(const std::vector<GridLocation> figures, const GridLocation& goal);
-	std::pair<bool, GridLocation> searchGoal(const Graph& graph, GridLocation start, GridLocation goal);
-	void findBarrier(Graph& graph, GridLocation& current);
+	std::pair<int, GridLocation> searchGoal(const Graph& graph, GridLocation start, GridLocation goal);
 
 private:
+	static const unsigned NUMBER_MOVES_TO_FREE_HOUSE = 12;
 	std::vector<GridLocation> goals;
 	std::vector<GridLocation> figures;
-	//std::vector<std::pair<size_t, GridLocation>> figures;
 	size_t currentFigure;
 	size_t currentGoal;
 };

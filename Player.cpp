@@ -44,8 +44,8 @@ void Human::reset()
 
 void Human::fillFigures()
 {
-	for (int i = 7; i > whiteNum; i--)
-		for (int j = 7; j > whiteNum; j--)
+	for (int i = BOARD_LEN-1; i > whiteNum; i--)
+		for (int j = BOARD_LEN-1; j > whiteNum; j--)
 		{
 			board->field[i][j] = color;
 			++numberFig;
@@ -87,12 +87,6 @@ size_t AI::findMinDistance(const std::vector<GridLocation> figures, const GridLo
 
 PlayResult AI::step()
 {
-	Graph graph(8, 8);
-	findBarrier(graph, currentPos);
-	GridLocation nextStep;
-	std::pair<bool, GridLocation> gl;
-	gl.first = false;
-
 	// Target selection
 	for (auto it = goals.begin(); it != goals.end(); it++)
 	{
@@ -116,18 +110,26 @@ PlayResult AI::step()
 		}
 	}
 
+	Graph graph(BOARD_LEN, BOARD_LEN);
+	graph.addBarrier(board->field);
+
+	GridLocation nextStep;
+	std::pair<int, GridLocation> gl;
+	gl.first = -1;
+
 	// Figure selection
 	nextStep = searchGoal(graph, figures.at(currentFigure), goals.at(currentGoal)).second;
-	if ((nextStep == figures.at(currentFigure)) || ((countStep % 3) == 0))
+	if ((nextStep != figures.at(currentFigure)) && ((countStep > NUMBER_MOVES_TO_FREE_HOUSE)))
 	{
+		int min = 0xFF; // max possible number of moves
 		for (auto it = figures.begin(); it != figures.end(); it++)
 		{
 			gl = searchGoal(graph, (*it), goals.at(currentGoal));
-			if (gl.first)
+			if ((gl.first < min) && (gl.first != -1))
 			{
+				min = gl.first;
 				currentFigure = std::distance(figures.begin(), it);
 				nextStep = gl.second;
-				break;
 			}
 		}
 	}
@@ -155,16 +157,6 @@ void AI::reset()
 	currentPos.row = currentPos.col = currentFigure = currentGoal = countStep = 0;
 }
 
-void AI::findBarrier(Graph& graph, GridLocation& current)
-{
-	for (size_t i = 0; i < 8; i++)
-		for (size_t j = 0; j < 8; j++)
-			if ((board->field[i][j] != FigureColor::NONE_COLOR))
-			{
-				addBarrier(graph, i, j);
-			}
-}
-
 void AI::fillFigures()
 {
 	if (!figures.empty())
@@ -185,23 +177,24 @@ void AI::fillGoals()
 	if (!goals.empty())
 		goals.clear();
 
-	for (int i = 7; i > whiteNum; i--)
-		for (int j = 7; j > whiteNum; j--)
+	for (int i = BOARD_LEN-1; i > whiteNum; i--)
+		for (int j = BOARD_LEN-1; j > whiteNum; j--)
 		{
 			goals.push_back(GridLocation{ i, j });
 		}
 }
 
-std::pair<bool, GridLocation> AI::searchGoal(const Graph& graph, GridLocation start, GridLocation goal)
+std::pair<int, GridLocation> AI::searchGoal(const Graph& graph, GridLocation start, GridLocation goal)
 {
-	std::pair<bool, GridLocation> gl;
-	gl.first = false; gl.second = start;
+	std::pair<int, GridLocation> gl;
+	gl.first = -1; gl.second = start;
 
 	std::queue<GridLocation> frontier;
 	frontier.push(start);
 	std::unordered_map<GridLocation, GridLocation> cameFrom;
 	cameFrom[start] = start;
 
+	// build graph
 	while (!frontier.empty()) {
 		auto current = frontier.front();
 		frontier.pop();
@@ -218,66 +211,33 @@ std::pair<bool, GridLocation> AI::searchGoal(const Graph& graph, GridLocation st
 		}
 	}
 
-	// Find back path
 	if (cameFrom.empty())
 	{
 		return gl;
 	}
 
+	// Find goal
 	auto it = cameFrom.find(goal);
 	std::pair<GridLocation, GridLocation> p;
 	if (it != cameFrom.end())
 	{
 		p = *it;
-		gl.first = true;
+		gl.first = 0;
 	}
 	else
 	{
-		auto max = get_max(cameFrom);
-		p = max;
+		p = get_max(cameFrom);
 	}
 
-	while (p.second != start) {
+	// Find back path
+	while ((p.second != start)) {
 		auto it = cameFrom.find(p.second);
 		p = *it;
+		if (gl.first >= 0)
+			gl.first++;
 	}
 
 	gl.second = p.first;
 
 	return gl;
 }
-
-Graph::Graph(int _width, int _height) : width(_width), height(_height)
-{
-	DIRS = { GridLocation{1, 0}, GridLocation{0, -1}, GridLocation{-1, 0}, GridLocation{0, 1} };
-}
-
-bool Graph::inBounds(GridLocation id) const
-{
-	return 0 <= id.row && id.row < width && 0 <= id.col && id.col < height;
-}
-
-bool Graph::passable(GridLocation id) const
-{
-	return obstacles.find(id) == obstacles.end();
-}
-
-std::vector<GridLocation> Graph::neighbors(GridLocation id) const
-{
-	std::vector<GridLocation> results;
-
-	for (GridLocation dir : DIRS)
-	{
-		GridLocation next{ id.row + dir.row, id.col + dir.col };
-		if (inBounds(next) && passable(next))
-		{
-			results.push_back(next);
-		}
-	}
-
-	if ((id.row + id.col) % 2 == 0)
-		std::reverse(results.begin(), results.end());
-
-	return results;
-}
-

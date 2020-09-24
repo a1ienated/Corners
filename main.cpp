@@ -27,11 +27,9 @@ bool RenderFunc();
 
 // Global Variables:
 HGE* hge = 0;
-HTEXTURE TiTxt;
 hgeFont* HFont;
 
 // Checkerboard object
-//Board board;
 Player* player;
 Human* wplayer;
 AI* bplayer;
@@ -52,7 +50,6 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		MessageBoxA(0, "HGE initialization failed!", 0, 0);
 		return 0;
 	}
-	TiTxt = hge->Texture_Load("img//title.jpg");
 	HFont = new hgeFont("img//hel.fnt");
 	HFont->SetColor(ARGB(255, 0, 0, 0));
 
@@ -67,11 +64,11 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	wplayer = new Human(board, FigureColor::WHITE);
 	bplayer = new AI(board, FigureColor::BLACK);
 	player = wplayer;
+
 	// Start
 	hge->System_Start();
 
 	delete HFont;
-	hge->Texture_Free(TiTxt);
 	delete board, cursor;
 	delete exitBtn, timer;
 	delete wplayer, bplayer;
@@ -129,7 +126,7 @@ bool FrameFunc()
 	res = player->step();
 	if (res == PlayResult::SUCCESS)
 	{
-		if (player->getCountStep() > 91)
+		if (player->getCountStep() > 89)
 			s = board->checkFinishGame(player->getNumberFig());
 
 		if (s != ResultGame::NO_WIN && !board->endGame)

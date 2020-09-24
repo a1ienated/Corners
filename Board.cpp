@@ -27,8 +27,8 @@ ResultGame Board::checkFinishGame(size_t numberFig)
 				whiteNumber++;
 
 	// Searching for blacks in the white house
-	for (int i = 5; i < 8; i++)
-		for (int j = 5; j < 8; j++)
+	for (int i = 5; i < BOARD_LEN; i++)
+		for (int j = 5; j < BOARD_LEN; j++)
 			if (field[i][j] == FigureColor::BLACK)
 				blackNumber++;
 
@@ -75,9 +75,7 @@ bool Board::isSelectCell(size_t row, size_t col, size_t curCellRow, size_t curCe
 {
 	// Check for color matching and cell change
 	if ((field[row][col] == c) && ((curCellRow != row) || (curCellCol != col)))
-	{
 		return true;
-	}
 
 	return false;
 }
@@ -99,9 +97,9 @@ char* Board::getWinMsg(ResultGame result)
 {
 	char *s;
 	if (result == BLACK_WIN) s = const_cast<char*>("Black wins!");
-	else if (result == WHITE_WIN) s = const_cast < char*>("White wins!");
-	else if (result == EQUAL_WIN) s = const_cast < char*>("Equal win!");
-	else return s = const_cast < char*>("");
+	else if (result == WHITE_WIN) s = const_cast<char*>("White wins!");
+	else if (result == EQUAL_WIN) s = const_cast<char*>("Equal win!");
+	else return s = const_cast<char*>("");
 
 	return s;
 }
@@ -125,28 +123,24 @@ void Board::delsrc()
 void Board::Render()
 {
 	// Board
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < BOARD_LEN+1; i++)
 	{
-		hge->Gfx_RenderLine(winPosX, winPosY + i * sellSize, winPosX + 8 * sellSize, winPosY + i * sellSize, ARGB(255, 0, 0, 0));
-		hge->Gfx_RenderLine(winPosX + i * sellSize, winPosY, winPosX + i * sellSize, winPosY + 8 * sellSize, ARGB(255, 0, 0, 0));
+		hge->Gfx_RenderLine(winPosX, winPosY + i * sellSize, winPosX + BOARD_LEN * sellSize, winPosY + i * sellSize, ARGB(255, 0, 0, 0));
+		hge->Gfx_RenderLine(winPosX + i * sellSize, winPosY, winPosX + i * sellSize, winPosY + BOARD_LEN * sellSize, ARGB(255, 0, 0, 0));
 	}
 
 	// Figure
-	for (int i = 0; i < BOARD_LEN; i++)//col
+	for (int i = 0; i < BOARD_LEN; i++) // col
 	{
-		for (int j = 0; j < BOARD_LEN; j++)//row
+		for (int j = 0; j < BOARD_LEN; j++) // row
 		{
 			int xx = winPosX + j * sellSize;
 			int yy = winPosY + i * sellSize;
 			FigureColor s = getColor(j, i);
 			if (s == BLACK)
-			{
 				BSpr->Render(xx, yy);
-			}
 			else if (s == WHITE)
-			{
 				WSpr->Render(xx, yy);
-			}
 		}
 	}
 }
